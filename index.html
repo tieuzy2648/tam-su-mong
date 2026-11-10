@@ -24,6 +24,8 @@
   --note-4:#dfe4fb;
   --note-ink:#2a2d45;
   --glow:rgba(233,162,59,.28);
+  --danger:#b3261e;
+  --scrim:rgba(15,18,45,.55);
   --f-display:"Bricolage Grotesque","Be Vietnam Pro",system-ui,sans-serif;
   --f-body:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-hand:"Pangolin","Comic Sans MS","Segoe Print",cursive;
@@ -33,14 +35,14 @@
     --bg:#131631;--surface:#1c2045;--ink:#eceefb;--muted:#a3a8cf;--line:#2e3361;
     --lamp:#f2b54f;--lamp-ink:#2b1a03;
     --note-1:#f3e3b0;--note-2:#c9e3d6;--note-3:#ecc9d2;--note-4:#cdd4f5;--note-ink:#22253d;
-    --glow:rgba(242,181,79,.18);color-scheme:dark;
+    --glow:rgba(242,181,79,.18);--danger:#ff9a8f;--scrim:rgba(5,6,20,.7);color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
   --bg:#131631;--surface:#1c2045;--ink:#eceefb;--muted:#a3a8cf;--line:#2e3361;
   --lamp:#f2b54f;--lamp-ink:#2b1a03;
   --note-1:#f3e3b0;--note-2:#c9e3d6;--note-3:#ecc9d2;--note-4:#cdd4f5;--note-ink:#22253d;
-  --glow:rgba(242,181,79,.18);color-scheme:dark;
+  --glow:rgba(242,181,79,.18);--danger:#ff9a8f;--scrim:rgba(5,6,20,.7);color-scheme:dark;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.6;
@@ -118,7 +120,31 @@ footer.site{border-top:1px solid var(--line);padding-block:24px 36px;font-size:.
   .board{grid-template-columns:1fr}
   .note:nth-of-type(n){margin-top:0}
 }
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* Pop-up tham gia */
+dialog.join{border:1px solid var(--line);border-radius:18px;padding:0;background:var(--surface);color:var(--ink);width:min(440px,calc(100% - 32px));max-height:calc(100% - 32px);box-shadow:0 30px 80px -20px var(--scrim)}
+dialog.join::backdrop{background:var(--scrim);backdrop-filter:blur(3px)}
+dialog.join[open]{animation:pop .22s ease-out}
+@keyframes pop{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+.join form{padding:26px;display:flex;flex-direction:column;gap:18px}
+.join .head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.join h2{margin:0;font-size:1.5rem}
+.join .x{border:0;background:transparent;color:var(--muted);font-size:1.5rem;line-height:1;cursor:pointer;padding:2px 6px;border-radius:8px}
+.join .intro{margin:-8px 0 0;color:var(--muted);font-size:.93rem}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:.8rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.field input{font:1rem var(--f-body);color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;width:100%}
+.field input:focus{outline:none;border-color:var(--lamp)}
+.field input[aria-invalid="true"]{border-color:var(--danger)}
+.field .hint{font-size:.8rem;color:var(--muted)}
+.field .err{font-size:.82rem;color:var(--danger);min-height:1em}
+.nick-row{display:flex;gap:8px}
+.nick-row input{flex:1;min-width:0}
+.dice{border:1.5px solid var(--line);background:transparent;color:var(--ink);border-radius:12px;padding:0 14px;cursor:pointer;font:600 .85rem var(--f-body);white-space:nowrap}
+.privacy{font-size:.82rem;color:var(--muted);background:var(--bg);border-radius:10px;padding:10px 12px;margin:0}
+.join .actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.who{display:inline-flex;align-items:center;gap:8px;font-size:.85rem;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 12px 5px 6px}
+.who .av{width:22px;height:22px;border-radius:50%;background:var(--lamp);color:var(--lamp-ink);display:grid;place-items:center;font-weight:700;font-size:.75rem}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
@@ -128,6 +154,7 @@ footer.site{border-top:1px solid var(--line);padding-block:24px 36px;font-size:.
   <header class="top">
     <div class="brand"><span class="moon" aria-hidden="true"></span>Tâm Sự Mỏng</div>
     <div class="clock" id="clock">Sinh viên UEH · 23:47</div>
+    <div class="who" id="who" hidden><span class="av" id="whoAv">?</span><span id="whoName"></span></div>
   </header>
 
   <section class="hero">
@@ -195,8 +222,113 @@ footer.site{border-top:1px solid var(--line);padding-block:24px 36px;font-size:.
   </footer>
 </div>
 
+<dialog class="join" id="joinDialog" aria-labelledby="joinTitle">
+  <form id="joinForm" method="dialog" novalidate>
+    <div class="head">
+      <h2 id="joinTitle">Chọn một cái tên ẩn danh</h2>
+      <button class="x" type="button" id="joinClose" aria-label="Đóng">×</button>
+    </div>
+    <p class="intro">Không cần tên thật hay MSSV. Mọi người chỉ thấy nickname và khoa của bạn.</p>
+
+    <div class="field">
+      <label for="nick">Nickname ẩn danh</label>
+      <div class="nick-row">
+        <input id="nick" name="nick" maxlength="20" autocomplete="off" placeholder="Ví dụ: Cú Đêm Cơ Sở B" aria-describedby="nickHint nickErr">
+        <button class="dice" type="button" id="dice">Gợi ý tên</button>
+      </div>
+      <span class="hint" id="nickHint">2–20 ký tự. Đừng dùng tên thật của bạn hay người khác.</span>
+      <span class="err" id="nickErr"></span>
+    </div>
+
+    <div class="field">
+      <label for="faculty">Khoa / ngành</label>
+      <input id="faculty" name="faculty" list="facultyList" maxlength="60" autocomplete="off" placeholder="Gõ hoặc chọn khoa của bạn" aria-describedby="facErr">
+      <datalist id="facultyList">
+        <option value="Kinh tế"></option>
+        <option value="Quản trị kinh doanh"></option>
+        <option value="Marketing"></option>
+        <option value="Kinh doanh quốc tế"></option>
+        <option value="Tài chính"></option>
+        <option value="Ngân hàng"></option>
+        <option value="Kế toán"></option>
+        <option value="Công nghệ thông tin kinh doanh"></option>
+        <option value="Luật"></option>
+        <option value="Du lịch"></option>
+        <option value="Ngoại ngữ"></option>
+        <option value="Quản lý nhà nước"></option>
+        <option value="Thiết kế"></option>
+      </datalist>
+      <span class="err" id="facErr"></span>
+    </div>
+
+    <p class="privacy">Trang không đọc được thông tin phần cứng của máy. Thay vào đó, trình duyệt của bạn giữ một mã ngẫu nhiên để lần sau tự nhận ra bạn. Xóa dữ liệu trình duyệt là mã này mất.</p>
+
+    <div class="actions">
+      <button class="btn ghost" type="button" id="joinCancel">Để sau</button>
+      <button class="btn" type="submit" id="joinSubmit">Vào Tâm Sự Mỏng</button>
+    </div>
+  </form>
+</dialog>
+
 <script>
 (function(){
+  /* ---- Tài khoản ẩn danh: mã ngẫu nhiên lưu trong trình duyệt ---- */
+  var KEY='tsm-account', account=null;
+  function load(){try{var a=JSON.parse(localStorage.getItem(KEY));if(a&&a.id&&a.nickname)return a;}catch(e){}return null;}
+  function save(a){try{localStorage.setItem(KEY,JSON.stringify(a));return true;}catch(e){return false;}}
+  function newId(){
+    if(window.crypto&&crypto.randomUUID)return crypto.randomUUID();
+    var b=new Uint8Array(16);(window.crypto||{getRandomValues:function(x){for(var i=0;i<x.length;i++)x[i]=Math.random()*256|0;return x;}}).getRandomValues(b);
+    return Array.prototype.map.call(b,function(x){return x.toString(16).padStart(2,'0');}).join('');
+  }
+  var joinBtn=document.getElementById('joinBtn'),joinStatus=document.getElementById('joinStatus');
+  function render(){
+    var who=document.getElementById('who');
+    if(!account){who.hidden=true;joinBtn.textContent='Mình muốn tham gia';return;}
+    document.getElementById('whoAv').textContent=account.nickname.trim().charAt(0).toUpperCase();
+    document.getElementById('whoName').textContent=account.nickname+' · '+account.faculty;
+    who.hidden=false;joinBtn.textContent='Sửa hồ sơ ẩn danh';
+  }
+
+  var dlg=document.getElementById('joinDialog'),nick=document.getElementById('nick'),fac=document.getElementById('faculty');
+  var nickErr=document.getElementById('nickErr'),facErr=document.getElementById('facErr');
+  function openDlg(){
+    nick.value=account?account.nickname:'';fac.value=account?account.faculty:'';
+    nickErr.textContent=facErr.textContent='';nick.removeAttribute('aria-invalid');fac.removeAttribute('aria-invalid');
+    document.getElementById('joinTitle').textContent=account?'Sửa hồ sơ ẩn danh':'Chọn một cái tên ẩn danh';
+    document.getElementById('joinSubmit').textContent=account?'Lưu thay đổi':'Vào Tâm Sự Mỏng';
+    if(dlg.showModal)dlg.showModal();else dlg.setAttribute('open','');
+    nick.focus();
+  }
+  function closeDlg(){if(dlg.close)dlg.close();else dlg.removeAttribute('open');}
+  joinBtn.addEventListener('click',openDlg);
+  document.getElementById('joinClose').addEventListener('click',closeDlg);
+  document.getElementById('joinCancel').addEventListener('click',closeDlg);
+  dlg.addEventListener('click',function(e){if(e.target===dlg)closeDlg();});
+
+  var A=['Cú Đêm','Mèo Lười','Gấu Deadline','Cáo Nhỏ','Sóc Chạy KPI','Cá Voi','Chim Sẻ','Thỏ Ôn Thi','Rùa Chăm Chỉ','Mây Trôi'];
+  var B=['Cơ Sở A','Cơ Sở B','Cơ Sở N','Quận 3','Năm Nhất','Thư Viện','Căn Tin','Ký Túc Xá','Phòng B1','Ca Tối'];
+  document.getElementById('dice').addEventListener('click',function(){
+    nick.value=A[Math.random()*A.length|0]+' '+B[Math.random()*B.length|0];nick.removeAttribute('aria-invalid');nickErr.textContent='';nick.focus();
+  });
+
+  document.getElementById('joinForm').addEventListener('submit',function(e){
+    e.preventDefault();
+    var n=nick.value.trim().replace(/\s+/g,' '),f=fac.value.trim().replace(/\s+/g,' '),ok=true;
+    nickErr.textContent=facErr.textContent='';nick.removeAttribute('aria-invalid');fac.removeAttribute('aria-invalid');
+    if(n.length<2){nickErr.textContent='Nickname cần ít nhất 2 ký tự.';nick.setAttribute('aria-invalid','true');ok=false;}
+    else if(/^\d+$/.test(n)||/\d{6,}/.test(n)){nickErr.textContent='Nickname có vẻ giống MSSV. Chọn tên khác để giữ ẩn danh nhé.';nick.setAttribute('aria-invalid','true');ok=false;}
+    if(!f){facErr.textContent='Chọn hoặc gõ khoa của bạn.';fac.setAttribute('aria-invalid','true');ok=false;}
+    if(!ok){(nick.getAttribute('aria-invalid')?nick:fac).focus();return;}
+    var isNew=!account;
+    account={id:account?account.id:newId(),nickname:n,faculty:f,createdAt:account?account.createdAt:new Date().toISOString()};
+    var stored=save(account);
+    closeDlg();render();
+    joinStatus.textContent=(isNew?'Chào mừng '+n+'! ':'Đã lưu hồ sơ. ')+(stored?'Lần sau mở trang trên trình duyệt này, bạn vẫn đăng nhập sẵn.':'Trình duyệt đang chặn lưu dữ liệu nên hồ sơ chỉ giữ đến khi đóng trang.');
+  });
+
+  account=load();render();
+  if(account)joinStatus.textContent='Chào lại '+account.nickname+'!';
   var clock=document.getElementById('clock');
   function tick(){var d=new Date();clock.textContent='Sinh viên UEH · '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
   tick();setInterval(tick,30000);
@@ -208,9 +340,6 @@ footer.site{border-top:1px solid var(--line);padding-block:24px 36px;font-size:.
     });
   });
 
-  document.getElementById('joinBtn').addEventListener('click',function(){
-    document.getElementById('joinStatus').textContent='Cảm ơn bạn! Trang chính thức sắp mở, nhớ theo dõi để vào sớm nhất nhé.';
-  });
 
   var ta=document.getElementById('noteText'),count=document.getElementById('count');
   ta.addEventListener('input',function(){count.textContent=ta.value.length+'/280';});
@@ -220,7 +349,8 @@ footer.site{border-top:1px solid var(--line);padding-block:24px 36px;font-size:.
     var board=document.querySelector('.board');var notes=board.querySelectorAll('.note');
     var a=document.createElement('article');a.className='note';
     var p=document.createElement('p');p.textContent=v;
-    var f=document.createElement('footer');f.innerHTML='<span>Bạn · vừa xong</span><span>chỉ bạn thấy</span>';
+    var f=document.createElement('footer');var s1=document.createElement('span'),s2=document.createElement('span');
+    s1.textContent=(account?account.nickname+' · '+account.faculty:'Bạn')+' · vừa xong';s2.textContent='chỉ bạn thấy';f.appendChild(s1);f.appendChild(s2);
     a.appendChild(p);a.appendChild(f);
     var old=notes[0];a.style.background=getComputedStyle(old).backgroundColor;
     board.replaceChild(a,old);
